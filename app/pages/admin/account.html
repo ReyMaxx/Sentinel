@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel — Cuenta</title>
+
+  <link rel="stylesheet" href="./../../public/style-admin.css">
+  <link rel="stylesheet" href="style.css">
+  
+  <link href="https://cdn.prod.website-files.com/644a3c274c8132e01fddc86e/6454e839683617f0c2edc791_favicon.ico" rel="shortcut icon">
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <div class="bg-blobs">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <div class="container">
+    <div class="badge">Gestión de cuenta</div>
+
+    <h1>Bienvenido, <span id="info-username">Cargando...</span></h1>
+    <p>
+      Recuerda siempre guardar los cambios y verificar los permisos antes de modificar configuraciones críticas.
+    </p>
+
+    <div class="user-info-card">
+      <div class="info-item">
+        <span class="info-label">Usuario</span>
+        <span class="info-value" id="user-val">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Email Corporativo</span>
+        <span class="info-value" id="email-val">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Creación de Cuenta</span>
+        <span class="info-value" id="created-val">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Inicio de Sesión</span>
+        <span class="info-value text-highlight" id="login-val">-</span>
+      </div>
+    </div>
+
+    <div class="btn-container">
+      <button id="courses-btn">Ir a Cursos</button>
+      <button id="logout-btn">Cerrar sesión</button>
+    </div>
+  </div>
+
+<script>
+  const logoutBtn = document.getElementById('logout-btn');
+  const coursesBtn = document.getElementById('courses-btn');
+
+  // Pedir datos de sesión al backend y pintarlos
+  async function cargarDatosUsuario() {
+    try {
+      const res = await fetch("/api/session");
+      
+      if (!res.ok) throw new Error("Error en la respuesta del servidor");
+      
+      const data = await res.json();
+
+      if (data.logueado) {
+        // Inyectamos de forma segura los datos recibidos en el HTML
+        document.getElementById('info-username').textContent = data.user;
+        document.getElementById('user-val').textContent = data.user;
+        document.getElementById('email-val').textContent = data.email;
+        document.getElementById('created-val').textContent = data.fechaCreacion;
+        document.getElementById('login-val').textContent = data.ultimoLogin;
+      } else {
+        // Redirección de seguridad si el backend dice que no está logueado
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error("Error al cargar la información del usuario:", error);
+      document.getElementById('info-username').textContent = "Error";
+    }
+  }
+
+  // Ejecutamos la carga inmediatamente al leer el script
+  cargarDatosUsuario();
+
+  // Evento del nuevo botón Ir a Cursos
+  coursesBtn.addEventListener('click', () => {
+    window.location.href = '/cursos'; // Cambia esta ruta según tu backend/frontend
+  });
+
+  // Evento de Logout
+  logoutBtn.addEventListener('click', async () => {
+    const res = await fetch("/api/logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (res.ok) {
+      window.location.href = '/login';
+    } else {
+      console.error("No se pudo cerrar la sesión en el servidor");
+    }
+  });
+</script>
+
+</body>
+</html>

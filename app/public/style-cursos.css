@@ -1,0 +1,74 @@
+html, body { 
+  height: 100%; 
+  margin: 0; 
+}
+
+body { 
+  box-sizing: border-box; 
+  /* Forzamos a que cualquier fondo que se aplique al body sea fijo y cubra todo */
+  background-attachment: fixed !important; 
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+}
+
+.gradient-bg {
+  /* Mantenemos el degradado inicial aquí */
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0f172a 100%);
+}
+
+/* ... El resto de tus clases (.glow-card, .btn-primary, etc.) se quedan exactamente igual ... */
+
+.glow-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.glow-card:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  transition: all 0.3s;
+}
+
+.btn-primary:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4); 
+}
+
+.btn-secondary {
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover { 
+  background: rgba(99, 102, 241, 0.1); 
+  transform: translateY(-2px); 
+}
+
+.orbit { 
+  animation: orbit 20s linear infinite; 
+}
+
+@keyframes orbit { 
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); } 
+  to { transform: rotate(360deg) translateX(120px) rotate(-360deg); } 
+}
+
+@keyframes fadeUp { 
+  from { opacity: 0; transform: translateY(30px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+
+.fade-up { 
+  animation: fadeUp 0.8s ease forwards; 
+  opacity: 0; 
+}
+
+.fade-up-d1 { animation-delay: 0.1s; }
+.fade-up-d2 { animation-delay: 0.3s; }
+.fade-up-d3 { animation-delay: 0.5s; }
+.fade-up-d4 { animation-delay: 0.7s; }

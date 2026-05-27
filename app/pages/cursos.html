@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="es" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shuttle Sentinel - Cursos</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.prod.website-files.com/644a3c274c8132e01fddc86e/6454e839683617f0c2edc791_favicon.ico" rel="shortcut icon" type="image/x-icon">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --surface-color: #111827;
+      --surface-border: rgba(255, 255, 255, 0.06);
+      --accent-color: #3947e9;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    body { 
+      box-sizing: border-box; 
+      background-color: var(--bg-color);
+      overflow-x: hidden;
+    }
+
+    /* OPTIMIZACIÓN: Fondo estático con gradiente suave. Cero impacto de renderizado */
+    .bg-ambient {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: 
+        radial-gradient(circle at 15% 15%, rgba(0, 178, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
+        linear-gradient(rgba(0, 178, 255, 0.02) 1px, transparent 1px) 0 0 / 40px 40px,
+        linear-gradient(90deg, rgba(0, 178, 255, 0.02) 1px, transparent 1px) 0 0 / 40px 40px;
+      z-index: 1;
+    }
+
+    /* OPTIMIZACIÓN: Se removió el backdrop-filter en las tarjetas para eliminar el lag por completo */
+    .glass-panel {
+      background: var(--surface-color);
+      border: 1px solid var(--surface-border);
+      box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
+    }
+
+    /* OPTIMIZACIÓN: El modal mantiene un desenfoque muy leve sólo porque es un elemento único */
+    .modal-panel {
+      background: rgba(17, 24, 39, 0.9);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1px solid var(--surface-border);
+    }
+
+    .course-card:hover { 
+      transform: translateY(-2px); 
+      border-color: rgba(0, 178, 255, 0.3);
+    }
+
+    .btn-login-style {
+      background: var(--accent-color);
+      color: #030712;
+      transition: opacity 0.15s ease;
+    }
+    .btn-login-style:hover {
+      opacity: 0.9;
+    }
+  </style>
+ </head>
+ <body class="h-full">
+
+  <div class="bg-ambient"></div>
+
+  <div id="app" class="h-full w-full overflow-auto relative z-10" style="font-family:'DM Sans',sans-serif;">
+    
+   <div id="main-view" class="block">
+     <header class="px-6 py-8 md:px-12 lg:px-20 max-w-7xl mx-auto relative z-10">
+      
+      <div class="absolute top-8 right-6 md:right-12 lg:right-20 flex items-center gap-3 z-50">
+        <a href="/account" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-300 hover:text-white bg-white/5 border border-white/10 hover:bg-white/10">
+          <i data-lucide="user" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Ir al Panel</span>
+        </a>
+        <button id="logoutBtn" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-red-400 bg-red-950/20 border border-red-900/30 hover:bg-red-900/40 hover:text-red-300">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Cerrar Sesión</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3 mb-6">
+       <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-[#00b2ff]">
+         <img src="../public/images/Shuttle_Cloud_Logo.png" alt="Shuttle Cloud Logo" class="w-6 h-6 object-contain">
+       </div>
+       <span style="font-family:'Space Mono',monospace; color:#00b2ff; font-size:14px; letter-spacing:2px;">SHUTTLE SENTINEL</span>
+      </div>
+      <h1 id="page-title" class="text-3xl md:text-4xl font-bold mb-3 tracking-tight" style="color: var(--text-main);">Centro de Capacitación de Certificaciones</h1>
+      <p id="subtitle-text" class="text-base md:text-lg max-w-3xl" style="color: var(--text-muted);">Completa las capacitaciones oficiales y obligatorias para preparar y asegurar nuestras certificaciones normativas internacionales.</p>
+      
+      <div id="overall-progress" class="mt-8 p-5 rounded-xl glass-panel">
+       <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium" style="color: var(--text-muted);">Progreso de Certificación General</span> 
+        <span id="overall-pct" class="text-sm font-bold" style="color:#00b2ff;">0%</span>
+       </div>
+       <div class="w-full h-2 rounded-full bg-black/40">
+        <div id="overall-bar" class="h-full rounded-full transition-all duration-300" style="background:#00b2ff; width:0%;"></div>
+       </div>
+      </div>
+     </header>
+
+     <main class="px-6 md:px-12 lg:px-20 pb-12 max-w-7xl mx-auto relative z-10">
+      <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+     </main>
+   </div>
+
+   <div id="course-detail-view" class="hidden px-6 py-8 md:px-12 lg:px-20 max-w-4xl mx-auto relative z-10">
+     <button onclick="closeCourse()" class="flex items-center gap-2 mb-6 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-white/5" style="color:#00b2ff; border:1px solid rgba(0,178,255,0.3); background: rgba(0,178,255,0.02);">
+       <i data-lucide="arrow-left" style="width:16px; height:16px;"></i> Volver al Centro de Capacitación
+     </button>
+     
+     <div class="p-6 md:p-8 rounded-xl mb-6 glass-panel">
+       <div class="flex items-center justify-between mb-4">
+         <span id="detail-tag" class="text-xs font-mono px-2 py-1 rounded font-bold" style="background:rgba(0,178,255,0.15); color:#00b2ff; border: 1px solid rgba(0,178,255,0.2);"></span>
+         <div id="detail-icon-container" class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(0,178,255,0.1); border: 1px solid rgba(0,178,255,0.15)"></div>
+       </div>
+       <h2 id="detail-title" class="text-2xl md:text-3xl font-bold mb-3" style="color: var(--text-main);"></h2>
+       <p id="detail-full-desc" class="text-base mb-6 leading-relaxed" style="color: var(--text-muted);"></p>
+       
+       <div class="mb-2 flex items-center justify-between">
+         <span class="text-sm font-medium" style="color: var(--text-muted);">Progreso del Curso</span>
+         <span id="detail-progress-pct" class="text-sm font-bold" style="color:#00b2ff;">0%</span>
+       </div>
+       <div class="w-full h-2 rounded-full bg-black/40 mb-2">
+         <div id="detail-progress-bar" class="h-full rounded-full transition-all duration-300" style="background:#00b2ff; width:0%;"></div>
+       </div>
+       
+       <div id="cert-generation-zone" class="mt-6 pt-6 border-t border-white/5 hidden">
+         <label for="user-full-name" class="block text-xs font-mono mb-2 tracking-wider text-blue-400">NOMBRE COMPLETO PARA EL CERTIFICADO</label>
+         <div class="flex flex-col md:flex-row gap-3">
+           <input type="text" id="user-full-name" placeholder="Escribe tu nombre y apellidos..." class="flex-1 px-4 py-2.5 rounded-lg bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#00b2ff] text-sm transition-all" />
+           <button id="download-cert-btn" class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold bg-green-500 text-black hover:bg-green-400 transition-all shadow-lg shadow-green-500/10">
+             <i data-lucide="download" style="width:16px; height:16px;"></i> Descargar Certificado
+           </button>
+         </div>
+         <p id="cert-error-msg" class="text-xs text-red-400 mt-1.5 hidden">Por favor, escribe tu nombre antes de descargar el certificado.</p>
+       </div>
+     </div>
+
+     <div class="p-6 rounded-xl glass-panel">
+       <h3 class="text-lg font-semibold mb-4" style="color: var(--text-main);">Módulos del Plan de Estudios</h3>
+       <p class="text-xs mb-4" style="color: var(--text-muted);">Haz clic en cada módulo para ver su contenido y gestionar tu progreso:</p>
+       <div id="modules-list" class="space-y-3"></div>
+     </div>
+   </div>
+
+   <div id="module-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 transition-all">
+     <div class="w-full max-w-2xl rounded-xl p-6 shadow-2xl relative modal-panel">
+       
+       <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5">
+         <i data-lucide="x" style="width:24px; height:24px;"></i>
+       </button>
+
+       <div class="mb-4 pr-8">
+         <span id="modal-module-index" class="text-xs font-mono text-blue-400 font-bold block mb-1 tracking-widest">MÓDULO 01</span>
+         <h3 id="modal-module-title" class="text-xl font-bold" style="color: var(--text-main);">Título del Contenido</h3>
+       </div>
+
+       <hr style="border-color: var(--surface-border);" class="mb-4">
+
+       <div class="space-y-4 my-6 text-sm overflow-y-auto max-h-[60vh]" style="color: var(--text-muted);">
+         <div class="p-4 rounded-lg bg-black/20 border border-dashed border-white/10">
+           <p class="font-mono text-xs text-blue-400/70 mb-2">// PLACEHOLDER DE INFORMACIÓN DEL CURSO</p>
+           <p class="mb-3 text-gray-300">Aquí puedes añadir la documentación estructurada, vídeos embebidos, guías de estudio o explicaciones detalladas para este módulo en específico.</p>
+           <p class="text-gray-400">Actualmente visualizando los recursos preparados para asegurar el éxito en la certificación oficial de Shuttle Sentinel.</p>
+         </div>
+       </div>
+
+       <hr style="border-color: var(--surface-border);" class="mt-4 mb-4">
+
+       <div class="flex justify-between items-center">
+         <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors">
+           Cerrar ventana
+         </button>
+         <button id="modal-action-btn" class="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all btn-login-style">
+           <i data-lucide="check" style="width:16px; height:16px;"></i> <span>Marcar como Completado</span>
+         </button>
+       </div>
+
+     </div>
+   </div>
+
+  </div>
+
+  <div id="certificate-template" class="hidden">
+    <div style="width: 800px; height: 550px; background: #0b0f19; color: #f3f4f6; padding: 40px; border: 8px solid #00b2ff; font-family: 'DM Sans', sans-serif; position: relative; box-sizing: border-box;">
+      <div style="position: absolute; inset: 20px; border: 1px solid rgba(0, 178, 255, 0.2); pointer-events: none;"></div>
+      
+      <div style="text-align: center; margin-top: 20px;">
+        <span style="font-family: 'Space Mono', monospace; color: #00b2ff; font-size: 14px; letter-spacing: 4px; display: block; margin-bottom: 10px;">SHUTTLE SENTINEL</span>
+        <div style="width: 60px; height: 2px; background: #00b2ff; margin: 0 auto;"></div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px;">
+        <h1 style="font-size: 34px; font-weight: 700; color: #f3f4f6; margin-bottom: 10px; letter-spacing: 1px;">CERTIFICADO DE COMPLETADO</h1>
+        <p style="color: #9ca3af; font-size: 15px; margin-bottom: 35px;">Otorgado oficialmente por la plataforma de capacitación normativa</p>
+        
+        <p style="color: #9ca3af; font-size: 13px; margin-bottom: 5px; font-family: 'Space Mono', monospace;">MENCION HONORÍFICA AVALADA A FAVOR DE:</p>
+        <h2 id="cert-user-name" style="font-size: 32px; font-weight: 700; color: #ffffff; margin-bottom: 25px; letter-spacing: -0.5px;">[Nombre del Alumno]</h2>
+        
+        <p style="color: #9ca3af; font-size: 13px; margin-bottom: 5px; font-family: 'Space Mono', monospace;">POR HABER COMPLETADO SATISFACTORIAMENTE EL CURSO DE:</p>
+        <h3 id="cert-course-title" style="font-size: 24px; font-weight: 700; color: #00b2ff; margin-bottom: 35px;">[Nombre del Curso]</h3>
+      </div>
+
+      <div style="position: absolute; bottom: 50px; left: 40px; right: 40px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+          <p style="color: #9ca3af; font-size: 12px; font-family: 'Space Mono', monospace; margin: 0;">FECHA DE EMISIÓN</p>
+          <p id="cert-date" style="color: #f3f4f6; font-size: 14px; font-weight: 600; margin: 3px 0 0 0;">--/--/----</p>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 150px; height: 1px; background: rgba(255,255,255,0.2); margin-bottom: 8px;"></div>
+          <p style="color: #00b2ff; font-size: 12px; font-family: 'Space Mono', monospace; margin: 0; font-weight: bold;">SISTEMA AUTOMATIZADO</p>
+          <p style="color: #555; font-size: 9px; margin: 0; font-family: 'Space Mono', monospace;">ID: SENTINEL-VERIFIED</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const COURSES = [
+      {
+        id: 'gdpr-fundamentals',
+        title: 'Fundamentos del GDPR',
+        shortDesc: 'Principios clave del Reglamento General de Protección de Datos.',
+        fullDesc: 'Una introducción exhaustiva al GDPR diseñada para certificaciones de privacidad de datos (DPO/CIPP/E). Cubre los principios fundamentales de protección de datos, derechos del interesado y las obligaciones críticas del responsable del tratamiento.',
+        content: [
+          'Principios de protección de datos y licitud',
+          'Derechos del interesado y mechanisms de ejercicio',
+          'Consentimiento, bases legales y su gestión',
+          'Evaluación de Impacto Relativa a la Protección de Datos (EIPD)',
+          'Notificación y gestión de brechas de seguridad',
+          'Transferencias internacionales de datos',
+          'Designación y Rol del Delegado de Protección de Datos (DPO)',
+          'Sanciones administrativas y auditorías de cumplimiento'
+        ],
+        icon: 'file-text',
+        tag: 'Certificación GDPR',
+      },
+      {
+        id: 'iso27001-intro',
+        title: 'Introducción a ISO 27001',
+        shortDesc: 'Marco internacional de gestión de seguridad de la información.',
+        fullDesc: 'Aprende las directrices clave de ISO/IEC 27001, el estándar internacional por excelencia para auditorías de SGSI. Preparación ideal para certificaciones de Auditor Interno/Líder o Implementador Líder de seguridad.',
+        content: [
+          'Contexto de la organización y alcance del SGSI',
+          'Liderazgo, política y el Ciclo PDCA (Deming)',
+          'Metodología de gestión y evaluación de riesgos',
+          'Análisis de Impacto del Riesgo sobre el negocio',
+          'Tratamiento de riesgos y Declaración de Aplicabilidad (SoA)',
+          'Dominios de control esenciales (Anexo A)',
+          'Estructura documental y control de registros obligatorios',
+          'Auditabilidad interna y preparación para Certificación Externa'
+        ],
+        icon: 'lock',
+        tag: 'Certificación ISO 27001',
+      }
+    ];
+
+    let userProgress = JSON.parse(localStorage.getItem('shuttle_sentinel_blue_progress')) || {};
+    let activeCourseId = null;
+    let activeModuleIndex = null;
+
+    // EVENTO DE LOGOUT CON INTEGRACIÓN DE REDIRECCIÓN Y MANEJO DE ERRORES
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch("/api/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (res.ok) {
+          // Si el borrado de sesión es correcto, limpia el progreso (opcional) y redirige
+          window.location.href = "/login"; 
+        } else {
+          console.error("No se pudo cerrar la sesión correctamente en el servidor.");
+          alert("Error al cerrar sesión. Inténtalo de nuevo.");
+        }
+      } catch (error) {
+        console.error("Error de red durante el logout:", error);
+        alert("Error de conexión con el servidor.");
+      }
+    });
+
+    function getCoursePct(courseId) {
+      const course = COURSES.find(c => c.id === courseId);
+      if (!course) return 0;
+      const completedList = userProgress[courseId] || [];
+      if (course.content.length === 0) return 0;
+      return Math.round((completedList.length / course.content.length) * 100);
+    }
+
+    function renderCourses() {
+      const grid = document.getElementById('courses-grid');
+      grid.innerHTML = '';
+      
+      const fragment = document.createDocumentFragment();
+      
+      COURSES.forEach((course) => {
+        const progress = getCoursePct(course.id);
+        const completed = progress >= 100;
+        
+        const card = document.createElement('div');
+        card.id = `card-${course.id}`;
+        card.className = 'course-card glass-panel rounded-xl p-6 cursor-pointer';
+        card.onclick = () => openCourse(course.id);
+        
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(0,178,255,0.1); border: 1px solid rgba(0,178,255,0.15);">
+              <i data-lucide="${course.icon}" style="width:20px;height:20px;color:#00b2ff;"></i>
+            </div>
+            <span class="text-xs font-mono px-2 py-1 rounded font-bold" style="background:rgba(0,178,255,0.12); color:#00b2ff; border: 1px solid rgba(0,178,255,0.2);">${course.tag}</span>
+          </div>
+          <h3 class="card-title font-semibold text-xl mb-2" style="color: var(--text-main);">${course.title}</h3>
+          <p class="card-desc text-sm mb-4" style="color: var(--text-muted);">${course.shortDesc}</p>
+          
+          <div class="mb-4 pb-4" style="border-bottom: 1px solid var(--surface-border);">
+            <p class="text-xs font-semibold mb-2" style="color: var(--text-main);">Contenido del examen:</p>
+            <ul class="text-xs space-y-1" style="color: var(--text-muted);">
+              ${course.content.slice(0, 3).map(item => `<li>• ${item}</li>`).join('')}
+            </ul>
+            ${course.content.length > 3 ? `<p class="text-xs mt-2 font-medium" style="color:#00b2ff;">+ ${course.content.length - 3} módulos más dentro...</p>` : ''}
+          </div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs" style="color: var(--text-muted);">${course.content.length} módulos oficiales</span>
+            <span class="accent-text text-xs font-bold" style="color:#00b2ff;">${progress}%</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-black/40">
+            <div class="h-full rounded-full transition-all duration-300" style="width:${progress}%; background:${completed ? '#00b2ff' : 'rgba(0,178,255,0.6)'};"></div>
+          </div>
+          <div class="mt-4 flex items-center justify-between text-xs font-bold" style="color:#00b2ff;">
+            <span class="flex items-center gap-1">
+              ${completed ? `<i data-lucide="check-circle" style="width:14px;height:14px;"></i> Certificación Lista` : `<span>Ingresar al curso →</span>`}
+            </span>
+          </div>
+        `;
+        fragment.appendChild(card);
+      });
+      
+      grid.appendChild(fragment);
+      lucide.createIcons({ attrs: { class: 'lucide-icon' } });
+    }
+
+    function updateOverall() {
+      if (COURSES.length === 0) return;
+      let totalPctSum = 0;
+      COURSES.forEach(c => {
+        totalPctSum += getCoursePct(c.id);
+      });
+      const overallPct = Math.round(totalPctSum / COURSES.length);
+      
+      document.getElementById('overall-pct').textContent = `${overallPct}%`;
+      document.getElementById('overall-bar').style.width = `${overallPct}%`;
+    }
+
+    function openCourse(courseId) {
+      activeCourseId = courseId;
+      const course = COURSES.find(c => c.id === courseId);
+      if (!course) return;
+
+      document.getElementById('main-view').classList.replace('block', 'hidden');
+      document.getElementById('course-detail-view').classList.replace('hidden', 'block');
+
+      document.getElementById('detail-title').textContent = course.title;
+      document.getElementById('detail-full-desc').textContent = course.fullDesc;
+      document.getElementById('detail-tag').textContent = course.tag;
+      
+      const iconContainer = document.getElementById('detail-icon-container');
+      iconContainer.innerHTML = `<i data-lucide="${course.icon}" style="width:22px;height:22px;color:#00b2ff;"></i>`;
+
+      // Gestión visual de la zona de certificados basada en el progreso
+      const progress = getCoursePct(courseId);
+      const certZone = document.getElementById('cert-generation-zone');
+      const certError = document.getElementById('cert-error-msg');
+      
+      if (progress >= 100) {
+        certZone.classList.remove('hidden');
+        certError.classList.add('hidden'); // Reiniciar errores previos
+        
+        // Asignar el trigger al botón de descarga existente en el HTML
+        const downloadBtn = document.getElementById('download-cert-btn');
+        downloadBtn.onclick = () => {
+          const userNameInput = document.getElementById('user-full-name').value.trim();
+          
+          if (!userNameInput) {
+            certError.classList.remove('hidden');
+            return;
+          }
+          
+          certError.classList.add('hidden');
+          downloadCertificate(userNameInput, course.title);
+        };
+      } else {
+        certZone.classList.add('hidden');
+      }
+
+      renderCourseModules();
+    }
+
+    function closeCourse() {
+      activeCourseId = null;
+      document.getElementById('course-detail-view').classList.replace('block', 'hidden');
+      document.getElementById('main-view').classList.replace('hidden', 'block');
+      renderCourses();
+      updateOverall();
+    }
+
+    function renderCourseModules() {
+      if (!activeCourseId) return;
+      const course = COURSES.find(c => c.id === activeCourseId);
+      const listContainer = document.getElementById('modules-list');
+      
+      const completedModules = userProgress[activeCourseId] || [];
+
+      let modulesHTML = '';
+      course.content.forEach((moduleName, index) => {
+        const isCompleted = completedModules.includes(index);
+        modulesHTML += `
+          <div onclick="openModal(${index})" class="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all border ${isCompleted ? 'bg-white/[0.02] border-blue-500/30' : 'bg-black/20 border-white/5 hover:border-white/10 hover:bg-white/[0.02]'}">
+            <div class="flex items-center gap-3 pr-4">
+              <div class="w-5 h-5 rounded flex items-center justify-center border transition-colors ${isCompleted ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}" id="chk-${index}">
+                ${isCompleted ? `<i data-lucide="check" style="width:14px;height:14px;color:#030712;stroke-width:3;"></i>` : ''}
+              </div>
+              <span class="text-sm font-medium ${isCompleted ? 'text-gray-500 line-through' : 'text-gray-200'}">${index + 1}. ${moduleName}</span>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded font-mono border ${isCompleted ? 'bg-blue-950/40 text-blue-400 border-blue-500/20' : 'bg-white/5 text-gray-400 border-white/5'}">
+              ${isCompleted ? 'Completado' : 'Pendiente'}
+            </span>
+          </div>
+        `;
+      });
+      listContainer.innerHTML = modulesHTML;
+
+      const currentPct = getCoursePct(activeCourseId);
+      document.getElementById('detail-progress-pct').textContent = `${currentPct}%`;
+      document.getElementById('detail-progress-bar').style.width = `${currentPct}%`;
+
+      lucide.createIcons({ root: listContainer });
+    }
+
+    function openModal(moduleIndex) {
+      if (!activeCourseId) return;
+      const course = COURSES.find(c => c.id === activeCourseId);
+      const moduleName = course.content[moduleIndex];
+      activeModuleIndex = moduleIndex;
+
+      const completedModules = userProgress[activeCourseId] || [];
+      const isCompleted = completedModules.includes(moduleIndex);
+
+      document.getElementById('modal-module-index').textContent = `MÓDULO ${(moduleIndex + 1).toString().padStart(2, '0')}`;
+      document.getElementById('modal-module-title').textContent = moduleName;
+
+      const actionBtn = document.getElementById('modal-action-btn');
+      if (isCompleted) {
+        actionBtn.removeAttribute('class');
+        actionBtn.className = "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all";
+        actionBtn.style.background = 'rgba(255,255,255,0.05)';
+        actionBtn.style.color = '#f3f4f6';
+        actionBtn.style.border = '1px solid rgba(255,255,255,0.1)';
+        actionBtn.style.boxShadow = 'none';
+        actionBtn.innerHTML = `<i data-lucide="refresh-cw" style="width:16px;height:16px;"></i> Reabrir Módulo`;
+      } else {
+        actionBtn.removeAttribute('style');
+        actionBtn.className = "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all btn-login-style";
+        actionBtn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> Marcar como Completado`;
+      }
+
+      actionBtn.onclick = () => {
+        toggleModuleCompletion(activeModuleIndex);
+        closeModal();
+        // Sincronizar cambios en la vista principal del curso
+        openCourse(activeCourseId);
+      };
+
+      document.getElementById('module-modal').classList.remove('hidden');
+      lucide.createIcons({ root: actionBtn });
+    }
+
+    function closeModal() {
+      document.getElementById('module-modal').classList.add('hidden');
+      activeModuleIndex = null;
+    }
+
+    function toggleModuleCompletion(moduleIndex) {
+      if (!activeCourseId) return;
+      if (!userProgress[activeCourseId]) {
+        userProgress[activeCourseId] = [];
+      }
+
+      const indexInArr = userProgress[activeCourseId].indexOf(moduleIndex);
+      if (indexInArr > -1) {
+        userProgress[activeCourseId].splice(indexInArr, 1);
+      } else {
+        userProgress[activeCourseId].push(moduleIndex);
+      }
+
+      localStorage.setItem('shuttle_sentinel_blue_progress', JSON.stringify(userProgress));
+      renderCourseModules();
+    }
+
+    function downloadCertificate(fullName, courseTitle) {
+      // Inyección de los datos capturados en caliente al HTML del PDF
+      document.getElementById('cert-user-name').textContent = fullName;
+      document.getElementById('cert-course-title').textContent = courseTitle;
+      
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      document.getElementById('cert-date').textContent = formattedDate;
+
+      const element = document.getElementById('certificate-template').firstElementChild;
+
+      const options = {
+        margin:       0,
+        filename:     `Certificado_Sentinel_${courseTitle.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, backgroundColor: '#0b0f19', useCORS: true },
+        jsPDF:        { unit: 'px', format: [800, 550], orientation: 'landscape' }
+      };
+
+      html2pdf().set(options).from(element).save();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderCourses();
+      updateOverall();
+      // Renderizar los iconos globales (incluyendo el de cuenta y logout)
+      lucide.createIcons();
+    });
+  </script>
+ </body>
+</html>
